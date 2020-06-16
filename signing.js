@@ -4,6 +4,11 @@ const secp256k1 = require('secp256k1');
 const { randomBytes, createHash } = require('crypto');
 
 
+const sha256 = msg => createHash('sha256').update(msg).digest();
+
+// Converts a hex  to a Buffer
+const toBytes = hex => Buffer.from(hex, 'hex');
+
 /**
  * A function which generates a new random Secp256k1 private key, returning
  * it as a 64 character hexadecimal string.
@@ -16,7 +21,15 @@ const { randomBytes, createHash } = require('crypto');
 const createPrivateKey = () => {
   // Enter your solution here
 
+ // generate privKey
+let privKey
+do {
+  privKey = randomBytes(32)
+} while (!secp256k1.privateKeyVerify(privKey))
+return privKey.toString('hex');
 };
+   const privateKey = createPrivateKey();
+   console.log(privateKey);
 
 /**
  * A function which takes a hexadecimal private key and returns its public pair
@@ -33,8 +46,13 @@ const createPrivateKey = () => {
  */
 const getPublicKey = privateKey => {
   // Your code here
+  
+  return secp256k1.publicKeyCreate(toBytes(privateKey)).toString('hex');
 
 };
+ const publicKey = getPublicKey(privateKey);
+ console.log(publicKey);
+
 
 /**
  * A function which takes a hex private key and a string message, returning
@@ -51,9 +69,11 @@ const getPublicKey = privateKey => {
  */
 const sign = (privateKey, message) => {
   // Your code here
-
+  const { signature } = secp256k1.sign(sha256(message), toBytes(privateKey));
+  return signature.toString('hex');
 };
-
+const signature = sign(privateKey, 'Hello World!');
+console.log(signature);
 /**
  * A function which takes a hex public key, a string message, and a hex
  * signature, and returns either true or false.
@@ -66,8 +86,10 @@ const sign = (privateKey, message) => {
  */
 const verify = (publicKey, message, signature) => {
   // Your code here
-
+  return secp256k1.verify(sha256(message),toBytes(signature),toBytes(publicKey));
 };
+console.log( verify(publicKey, 'Hello World!', signature) );
+console.log( verify(publicKey, 'Hello World?', signature) );
 
 module.exports = {
   createPrivateKey,
