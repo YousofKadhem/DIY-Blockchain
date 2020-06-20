@@ -12,7 +12,10 @@ const signing = require('./signing');
  */
 const isValidTransaction = transaction => {
   // Enter your solution here
-
+  if (transaction.amount < 0) {
+    return false;
+  }
+  return signing.verify(transaction.source, transaction.source + transaction.recipient + transaction.amount, transaction.signature);
 };
 
 /**
@@ -23,7 +26,13 @@ const isValidTransaction = transaction => {
  */
 const isValidBlock = block => {
   // Your code here
+  const transactionString = block.transactions.map(text => text.signature).join('');
 
+  if (block.hash !== createHash('sha512').update(block.previousHash + transactionString + block.nonce).digest('hex')) {
+    return false;
+  }
+
+  return block.transactions.every(isValidTransaction);
 };
 
 /**
@@ -38,7 +47,21 @@ const isValidBlock = block => {
  */
 const isValidChain = blockchain => {
   // Your code here
+  const { blocks } = blockchain;
 
+  if (blocks[0].previousHash !== null) {
+    return false;
+  }
+
+  if (blocks.slice(1).some((bl, j) => bl.previousHash !== blocks[j].hash)) {
+    return false;
+  }
+
+  if (blocks.some(bl => !isValidBlock(bl))) {
+    return false;
+  }
+
+  return blocks.map(bl => bl.transactions).reduce((f, t) => f.concat(t), []).every(isValidTransaction);
 };
 
 /**
@@ -48,7 +71,7 @@ const isValidChain = blockchain => {
  */
 const breakChain = blockchain => {
   // Your code here
-
+  blockchain.blocks[1].transactions[0].amount = 1998;
 };
 
 module.exports = {
